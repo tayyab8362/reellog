@@ -327,12 +327,12 @@ def get_transcript(video_id, lang, workdir, use_whisper, whisper_model, browser)
 # --------------------------- keyframes ------------------------------------- #
 
 def capture_keyframes(video_id: str, workdir: str, browser: str,
-                      output_dir: str, threshold: float = 0.05) -> list:
+                      output_dir: str, threshold: float = 0.02) -> list:
     """Download video, extract unique keyframes via ffmpeg scene detection.
 
     Returns list of saved image paths, or [] on failure.
     Scene change threshold: 0.0 (every frame) - 1.0 (only major cuts).
-    0.05 is a good default — catches most visual changes without over-capturing.
+    0.02 is a good default — catches most visual changes including subtle ones.
     """
     out_dir = os.path.join(output_dir, "screenshots", video_id)
     os.makedirs(out_dir, exist_ok=True)
@@ -512,8 +512,8 @@ def main():
                     help="browser to pull cookies from: chrome|firefox|safari|edge (default: chrome)")
     ap.add_argument("--screenshots", action="store_true",
                     help="capture unique keyframe screenshots for each video")
-    ap.add_argument("--scene-threshold", type=float, default=0.05,
-                    help="ffmpeg scene change sensitivity 0.0-1.0 (default: 0.05, lower=more frames)")
+    ap.add_argument("--scene-threshold", type=float, default=0.02,
+                    help="ffmpeg scene change sensitivity 0.0-1.0 (default: 0.02, lower=more frames)")
     args = ap.parse_args()
 
     workdir = ".archive_tmp"

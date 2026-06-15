@@ -77,14 +77,14 @@ python3 archive_channel.py "https://www.youtube.com/@channel_name" --no-whisper
 
 ### Control screenshot density
 ```bash
-# Default — catches most scene changes (~100-150 frames per 8min video)
+# Default — catches most scene changes including subtle ones
 python3 archive_channel.py "https://www.youtube.com/@channel_name" --screenshots
 
-# More frames — catches subtle visual shifts
-python3 archive_channel.py "https://www.youtube.com/@channel_name" --screenshots --scene-threshold 0.02
+# More frames — catches very subtle shifts
+python3 archive_channel.py "https://www.youtube.com/@channel_name" --screenshots --scene-threshold 0.01
 
 # Fewer frames — only major scene cuts
-python3 archive_channel.py "https://www.youtube.com/@channel_name" --screenshots --scene-threshold 0.2
+python3 archive_channel.py "https://www.youtube.com/@channel_name" --screenshots --scene-threshold 0.1
 ```
 
 ### Better Whisper accuracy (for videos with no captions)
@@ -100,7 +100,7 @@ python3 archive_channel.py "https://www.youtube.com/@channel_name" --whisper-mod
 |------|---------|-------------|
 | `--video` | off | Treat the URL as a single video instead of a channel |
 | `--screenshots` | off | Capture unique keyframe screenshots per video |
-| `--scene-threshold` | `0.05` | ffmpeg scene sensitivity `0.0`–`1.0` (lower = more frames) |
+| `--scene-threshold` | `0.02` | ffmpeg scene sensitivity `0.0`–`1.0` (lower = more frames) |
 | `--browser` | `chrome` | Browser for cookies: `chrome`, `firefox`, `safari`, `edge` |
 | `--lang` | `en` | Preferred caption language code |
 | `--no-whisper` | off | Skip Whisper offline fallback |
