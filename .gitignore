@@ -139,5 +139,6 @@ dist
 .archive_state.json
 .archive_tmp/
 output/
+downloads/
 __pycache__/
 *.pyc

@@ -176,6 +176,62 @@ pip install openai-whisper
 
 ---
 
+## Video Downloader (`download_channel.py`)
+
+A separate script for downloading full videos in max quality with organised folders and thumbnails.
+
+### Commands
+
+```bash
+# Full channel — max quality, grouped by year (default)
+python3 download_channel.py "https://www.youtube.com/@channel_name"
+
+# Full channel — grouped by playlist
+python3 download_channel.py "https://www.youtube.com/@channel_name" --group-by playlist
+
+# Single video — max quality
+python3 download_channel.py "https://www.youtube.com/watch?v=VIDEO_ID" --video
+
+# Cap at 1080p
+python3 download_channel.py "https://www.youtube.com/@channel_name" --quality 1080
+
+# Audio only (MP3)
+python3 download_channel.py "https://www.youtube.com/@channel_name" --format mp3
+
+# Firefox user
+python3 download_channel.py "https://www.youtube.com/@channel_name" --browser firefox
+
+# Skip thumbnails
+python3 download_channel.py "https://www.youtube.com/@channel_name" --no-thumbnails
+```
+
+### Output Structure
+
+```
+downloads/
+  Channel_Name/
+    2024/
+      2024-03-15 - Video Title.mp4
+      2024-03-15 - Video Title.jpg    ← thumbnail
+    2025/
+      2025-01-10 - Another Video.mp4
+      2025-01-10 - Another Video.jpg
+```
+
+### All Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--video` | off | Treat URL as a single video |
+| `--browser` | `chrome` | Browser for cookies: `chrome`, `firefox`, `safari`, `edge` |
+| `--format` | `video` | `video`, `mp3`, or `m4a` |
+| `--quality` | best | Max height in pixels: `1080`, `720`, `480` etc |
+| `--group-by` | `year` | Subfolder grouping: `year`, `playlist`, `flat` |
+| `--out-dir` | `downloads` | Root output directory |
+| `--no-thumbnails` | off | Skip saving thumbnail images |
+
+---
+
 ## Bugs Fixed (Development Notes)
 
 This section documents the issues discovered and fixed during development, so you don't have to deal with them.
