@@ -1,6 +1,6 @@
 # YouTube Channel Transcript Archiver
 
-Transcribes an **entire YouTube channel** into a single clean Markdown file — every video, with title, URL, upload date, duration, and full timestamped transcript.
+Transcribes a **YouTube channel or single video** into a clean Markdown file — with title, URL, upload date, duration, full timestamped transcript, and optional keyframe screenshots.
 
 ```
 ## Video 3: How to LEARN so FAST it feels ILLEGAL
@@ -8,6 +8,10 @@ Transcribes an **entire YouTube channel** into a single clean Markdown file — 
 * URL: https://www.youtube.com/watch?v=...
 * Upload Date: 2024-11-10
 * Duration: 06:42
+
+### Screenshots (8 keyframes)
+![00:14](screenshots/abc123/00-14.jpg)
+...
 
 ### Transcript
 
@@ -23,23 +27,70 @@ Transcribes an **entire YouTube channel** into a single clean Markdown file — 
 - Python 3.8+
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) (installed via pip, **not** the system package)
 - A browser with a YouTube login (Chrome, Firefox, Safari, or Edge)
-- *(Optional)* [ffmpeg](https://ffmpeg.org/) + `openai-whisper` for offline Whisper fallback
+- [ffmpeg](https://ffmpeg.org/) — required for screenshots (`brew install ffmpeg` on macOS)
+- *(Optional)* `openai-whisper` for offline transcription of videos with no captions
 
 ```bash
 pip install -r requirements.txt
 ```
 
-> **Firefox / Safari / Edge users:** pass `--browser firefox` (or `safari`/`edge`) — see flags below.
-
 ---
 
-## Quick Start
+## All Commands
 
+### Entire channel — transcript only
 ```bash
 python3 archive_channel.py "https://www.youtube.com/@channel_name"
 ```
 
-Output is written to `channel_archive.md` in the current directory. The run is **resumable** — if interrupted, re-run the same command and it skips already-completed videos.
+### Entire channel — transcript + screenshots
+```bash
+python3 archive_channel.py "https://www.youtube.com/@channel_name" --screenshots
+```
+
+### Single video — transcript only
+```bash
+python3 archive_channel.py "https://www.youtube.com/watch?v=VIDEO_ID" --video
+```
+
+### Single video — transcript + screenshots
+```bash
+python3 archive_channel.py "https://www.youtube.com/watch?v=VIDEO_ID" --video --screenshots
+```
+
+### Firefox / Safari / Edge (not Chrome)
+```bash
+python3 archive_channel.py "https://www.youtube.com/@channel_name" --browser firefox
+python3 archive_channel.py "https://www.youtube.com/@channel_name" --browser safari
+python3 archive_channel.py "https://www.youtube.com/@channel_name" --browser edge
+```
+
+### Non-English channel
+```bash
+python3 archive_channel.py "https://www.youtube.com/@channel_name" --lang ja
+```
+
+### Skip Whisper fallback (faster, no audio download)
+```bash
+python3 archive_channel.py "https://www.youtube.com/@channel_name" --no-whisper
+```
+
+### Control screenshot density
+```bash
+# Default — catches most scene changes (~100-150 frames per 8min video)
+python3 archive_channel.py "https://www.youtube.com/@channel_name" --screenshots
+
+# More frames — catches subtle visual shifts
+python3 archive_channel.py "https://www.youtube.com/@channel_name" --screenshots --scene-threshold 0.02
+
+# Fewer frames — only major scene cuts
+python3 archive_channel.py "https://www.youtube.com/@channel_name" --screenshots --scene-threshold 0.2
+```
+
+### Better Whisper accuracy (for videos with no captions)
+```bash
+python3 archive_channel.py "https://www.youtube.com/@channel_name" --whisper-model small
+```
 
 ---
 
@@ -47,61 +98,81 @@ Output is written to `channel_archive.md` in the current directory. The run is *
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--browser` | `chrome` | Browser to pull cookies from: `chrome`, `firefox`, `safari`, `edge` |
+| `--video` | off | Treat the URL as a single video instead of a channel |
+| `--screenshots` | off | Capture unique keyframe screenshots per video |
+| `--scene-threshold` | `0.05` | ffmpeg scene sensitivity `0.0`–`1.0` (lower = more frames) |
+| `--browser` | `chrome` | Browser for cookies: `chrome`, `firefox`, `safari`, `edge` |
 | `--lang` | `en` | Preferred caption language code |
-| `--no-whisper` | off | Skip Whisper offline fallback (faster) |
-| `--whisper-model` | `base` | Whisper model size: `tiny`, `base`, `small`, `medium`, `large` |
+| `--no-whisper` | off | Skip Whisper offline fallback |
+| `--whisper-model` | `base` | Whisper model: `tiny`, `base`, `small`, `medium`, `large` |
 
-```bash
-# Firefox user
-python3 archive_channel.py "https://www.youtube.com/@channel_name" --browser firefox
+---
 
-# Non-English channel
-python3 archive_channel.py "https://www.youtube.com/@channel_name" --lang ja
+## Output Structure
 
-# Faster, no Whisper
-python3 archive_channel.py "https://www.youtube.com/@channel_name" --no-whisper
+Each run saves into its own folder under `output/` so runs never overwrite each other:
+
 ```
+output/
+  channel__Hugh_Knows/          ← full channel run
+    archive.md                  ← all transcripts
+    screenshots/
+      <video_id>/               ← one folder per video
+        00-14.jpg               ← keyframe at 0m 14s
+        01-32.jpg
+        ...
+
+  video__PcC3OvlPDcE/           ← single video run
+    archive.md
+    screenshots/
+      PcC3OvlPDcE/
+        00-08.jpg
+        ...
+```
+
+Screenshots are **embedded inline in `archive.md`** at the exact timestamp where the scene changed, right above the matching transcript line:
+
+```
+![Scene change at [00:14]](output/video__PcC3OvlPDcE/screenshots/PcC3OvlPDcE/00-14.jpg)
+[00:14] Here's what most people get wrong...
+```
+
+Run is **resumable** — if interrupted, re-run the same command and it skips already-done videos.
 
 ---
 
 ## Why Browser Cookies Are Needed
 
-YouTube detects and blocks automated transcript/subtitle requests from IP addresses without a valid session. Passing `--cookies-from-browser` lets yt-dlp borrow your existing logged-in YouTube session from your browser — **no passwords are read or stored**, only the session cookie.
+YouTube blocks automated requests without a valid session. The script passes `--cookies-from-browser` to yt-dlp, which borrows your existing logged-in YouTube session — **no passwords are read or stored**, only the session cookie.
 
-This is a standard yt-dlp feature. See: [yt-dlp FAQ on cookies](https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp)
+See: [yt-dlp FAQ on cookies](https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp)
 
 ---
 
-## How It Works — Transcript Priority
+## How Transcripts Are Fetched (Priority Order)
 
-For each video the script tries three methods in order, stopping at the first success:
-
-1. **yt-dlp subtitle download** — downloads the `.vtt` caption file directly (works for most videos with auto-captions or manual subtitles)
+1. **yt-dlp subtitle download** — downloads `.vtt` caption file directly (works for most videos)
 2. **youtube-transcript-api** — Python library fallback
-3. **Whisper** *(optional)* — downloads audio and transcribes offline using OpenAI's Whisper model
+3. **Whisper** *(optional)* — downloads audio and transcribes offline
 
 ---
 
-## Whisper Fallback (Optional)
+## How Screenshots Work
 
-For videos with no captions at all, Whisper can transcribe the audio locally. Requires ffmpeg:
+ffmpeg's `select=gt(scene,threshold)` filter detects scene changes and extracts only frames where the visual content changes significantly. Falls back to 1 frame every 30 seconds if no scene changes are detected. Downloaded video is deleted after frame extraction to save disk space.
+
+---
+
+## Whisper Setup (Optional)
+
+Only needed for videos with no captions at all:
 
 ```bash
-# macOS
-brew install ffmpeg
-
-# then install whisper
+brew install ffmpeg          # macOS
 pip install openai-whisper
 ```
 
-Then run without `--no-whisper` and optionally pick a larger model for better accuracy:
-
-```bash
-python3 archive_channel.py "https://www.youtube.com/@channel_name" --whisper-model small
-```
-
-> `small` is a good balance of speed vs accuracy. `large` is best quality but slow.
+> `--whisper-model small` is a good balance of speed vs accuracy. `large` is best but slow.
 
 ---
 
