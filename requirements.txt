@@ -1,0 +1,4 @@
+yt-dlp>=2024.1.1
+youtube-transcript-api>=0.6.0
+# Optional Whisper fallback (large download, requires ffmpeg):
+# openai-whisper>=20231117
